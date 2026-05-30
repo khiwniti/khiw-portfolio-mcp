@@ -20,8 +20,9 @@ try {
   const app = createMcpExpressApp({ host: "0.0.0.0" });
   app.use(cors());
 
-  // Express 5 requires named or (.*) wildcards — bare * is rejected by path-to-regexp v8.
-  app.all("/(.*)", async (req: Request, res: Response) => {
+  // Express 5 path-to-regexp v8 rejects both * and /(.*) string patterns.
+  // A raw RegExp bypasses path-to-regexp entirely and works across all versions.
+  app.all(/.*/, async (req: Request, res: Response) => {
     if ((req.method === "GET" || req.method === "HEAD") && req.path.includes("healthz")) {
       res.json({ ok: true, server: "khiw-portfolio-mcp", time: new Date().toISOString() });
       return;
