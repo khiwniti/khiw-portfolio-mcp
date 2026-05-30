@@ -1,9 +1,9 @@
 /**
  * Vercel serverless entry for the MCP Streamable HTTP transport.
  *
- * Vercel invokes this file per-request (no persistent listen()). We create a
- * fresh McpServer per request — the SDK's stateless mode supports this and
- * it's the safe pattern for serverless environments.
+ * Vercel preserves the original request path when forwarding through rewrites,
+ * so we use `app.all("*")` — the function is the MCP endpoint regardless of
+ * whether the request arrives via /mcp (rewrite) or /api/mcp (direct).
  */
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -14,7 +14,13 @@ import { createServer } from "../server.js";
 const app = createMcpExpressApp({ host: "0.0.0.0" });
 app.use(cors());
 
-app.all("/api/mcp", async (req: Request, res: Response) => {
+app.all("*", async (req: Request, res: Response) => {
+  // Liveness probe — respond without starting an MCP session.
+  if ((req.method === "GET" || req.method === "HEAD") && req.path.includes("healthz")) {
+    res.json({ ok: true, server: "khiw-portfolio-mcp", time: new Date().toISOString() });
+    return;
+  }
+
   const server = createServer();
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
@@ -36,10 +42,6 @@ app.all("/api/mcp", async (req: Request, res: Response) => {
       });
     }
   }
-});
-
-app.get("/api/healthz", (_req: Request, res: Response) => {
-  res.json({ ok: true, server: "khiw-portfolio-mcp", time: new Date().toISOString() });
 });
 
 export default app;
