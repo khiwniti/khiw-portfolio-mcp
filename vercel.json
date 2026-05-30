@@ -12,7 +12,5 @@
     { "source": "/mcp/(.*)", "destination": "/api/mcp" },
     { "source": "/healthz", "destination": "/api/mcp" }
   ],
-  "redirects": [
-    { "source": "/", "destination": "https://khiw-portfolio-mcp-ui.vercel.app", "permanent": false }
-  ]
+  "redirects": []
 }
