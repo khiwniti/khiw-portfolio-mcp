@@ -18,13 +18,23 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult, ReadResourceResult } from "@modelcontextprotocol/sdk/types.js";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { PROJECTS, STATS, CAREER, SKILLS } from "./src/data.js";
 
-// Works both from source (server.ts via tsx) and compiled (dist/server.js).
-const DIST_DIR = import.meta.filename.endsWith(".ts")
-  ? path.join(path.dirname(import.meta.filename), "dist")
-  : path.dirname(import.meta.filename);
+// `import.meta.filename` requires Node 21.2+; use `import.meta.url` for Node 18/20.
+const __currentFile = fileURLToPath(import.meta.url);
+const __currentDir = path.dirname(__currentFile);
+
+// Resolve dist/ correctly in three contexts:
+//   1. tsx source run:      __currentFile = .../server.ts   → dist/ is a sibling of server.ts
+//   2. tsc compiled local:  __currentFile = .../dist/server.js → dist/ IS __currentDir
+//   3. Vercel bundle:       __currentFile = /var/task/api/mcp.js → dist/ is one level up
+const DIST_DIR = __currentFile.endsWith(".ts")
+  ? path.join(__currentDir, "dist")                // context 1
+  : path.basename(__currentDir) === "dist"
+    ? __currentDir                                  // context 2
+    : path.join(__currentDir, "..", "dist");        // context 3 (Vercel api/ bundle)
 
 const RESOURCE_URI = "ui://khiw-portfolio/main";
 

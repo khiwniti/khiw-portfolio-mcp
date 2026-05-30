@@ -7,7 +7,8 @@
   "functions": {
     "api/mcp.ts": {
       "memory": 512,
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "dist/mcp-app.html"
     }
   },
   "rewrites": [
